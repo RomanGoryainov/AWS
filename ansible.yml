@@ -1,0 +1,5 @@
+---
+  - hosts: all # Describe hosts
+    gather_facts: true
+    become: true
+    become_user: root
