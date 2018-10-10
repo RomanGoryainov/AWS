@@ -110,6 +110,25 @@
     }
   },
   
+    "PrivateRouteTable" : {
+    "Type" : "AWS::EC2::RouteTable",
+    "Properties" : {
+      "VpcId" : {"Ref" : "VPC"},
+      "Tags" : [
+        { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+        {"Key" : "Network", "Value" : "Private" }
+      ]
+    }
+  },
+
+    "PrivateSubnetRouteTableAssociation" : {
+    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+    "Properties" : {
+      "SubnetId" : { "Ref" : "PrivateSubnet" },
+      "RouteTableId" : { "Ref" : "PrivateRouteTable" }
+    }
+  },
+
     "EC2SecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {

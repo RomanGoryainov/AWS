@@ -167,6 +167,26 @@
   
         "EC2Instance" : {
         "Type" : "AWS::EC2::Instance",
+        "Metadata" : {
+            "Comment" : "Configure the bootstrap helpers to install the Apache Web Server and mc",
+            "AWS::CloudFormation::Init" : {
+                "configSets" : {
+                  "Install" : [ "Install" ]
+                },
+                "Install" : {
+                  "packages" : {
+                    "yum" : {
+                      "httpd"        : []
+                    }
+                  },        
+                    "services" : {
+                      "sysvinit" : {
+                        "httpd"  : { "enabled" : "true", "ensureRunning" : "true" }
+                      }
+                    }
+                  }
+                }
+        },
         "Properties" : {
           "InstanceType" : { "Ref" : "InstanceType" },
           "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
