@@ -44,6 +44,7 @@
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Public", "CIDR" ]},
+        "MapPublicIpOnLaunch" : "true",
         "Tags" : [
           { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
           { "Key" : "Network", "Value" : "Public" }
@@ -125,15 +126,24 @@
 "Outputs" : {
     "VPCId" : {
       "Description" : "VPCId of the newly created VPC",
-      "Value" :  { "Ref" : "VPC" }
+      "Value" :  { "Ref" : "VPC" },
+      "Export" : {
+        "Name" : {"Fn::Sub": "${AWS::StackName}-VPCID" }
+      }
     },
     "PublicSubnet" : {
       "Description" : "SubnetId of the public subnet",
-      "Value" :  { "Ref" : "PublicSubnet" }
+      "Value" :  { "Ref" : "PublicSubnet" },
+      "Export" : {
+        "Name" : {"Fn::Sub": "${AWS::StackName}-PublicID" }
+      }
     },
     "PrivateSubnet" : {
       "Description" : "SubnetId of the private subnet",
-      "Value" :  { "Ref" : "PrivateSubnet" }
+      "Value" :  { "Ref" : "PrivateSubnet" },
+      "Export" : {
+        "Name" : {"Fn::Sub": "${AWS::StackName}-PrivateID" }
+      }
     },
     "InternetGateway" : {
       "Description" : "Id of the Internet Gateway",
@@ -141,7 +151,10 @@
     },
     "EC2SecurityGroup" : {
       "Description" : "SecurityGroupId of the Security Group",
-      "Value" : { "Ref" : "EC2SecurityGroup"}
+      "Value" : { "Ref" : "EC2SecurityGroup"},
+      "Export" : {
+        "Name" : {"Fn::Sub": "${AWS::StackName}-SecurityGroupID" }
+      }
     }
   }
 }
