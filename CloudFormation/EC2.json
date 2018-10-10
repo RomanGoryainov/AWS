@@ -176,7 +176,8 @@
                 "Install" : {
                   "packages" : {
                     "yum" : {
-                      "httpd"        : []
+                      "httpd"        : [],
+                      "mc.x86_64"    : []
                     }
                   },        
                     "services" : {
@@ -238,6 +239,10 @@
       "PublicIp" : {
         "Value" : { "Fn::GetAtt" : [ "EC2Instance", "PublicIp" ]},
         "Description" : "EC2 PublicIp Address"
+      },
+      "URL" : {
+        "Description" : "URL for newly created LAMP stack",
+        "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "EC2Instance", "PublicDnsName" ]}]] }
       }
     }
 }   
