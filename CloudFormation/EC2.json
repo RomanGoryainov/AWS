@@ -1,7 +1,7 @@
 {
     "AWSTemplateFormatVersion" : "2010-09-09",
   
-    "Description" : "AWS CloudFormation Sample Template VPC_EC2_.",
+    "Description" : "AWS CloudFormation Sample Template EC2.",
   
     "Parameters" : {
   
@@ -241,7 +241,7 @@
         "Description" : "EC2 PublicIp Address"
       },
       "URL" : {
-        "Description" : "URL for newly created LAMP stack",
+        "Description" : "URL for newly created Apache stack",
         "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "EC2Instance", "PublicDnsName" ]}]] }
       }
     }
