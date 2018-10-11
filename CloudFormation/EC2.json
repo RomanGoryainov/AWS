@@ -171,9 +171,46 @@
             "Comment" : "Configure the bootstrap helpers to install the Apache Web Server and mc",
             "AWS::CloudFormation::Init" : {
                 "configSets" : {
-                  "Install" : [ "Install" ]
+                  "install" : [ "install_cfn", "install" ]
                 },
-                "Install" : {
+
+                "install_cfn" : {
+                  "files": {
+                    "/etc/cfn/cfn-hup.conf": {
+                      "content": { "Fn::Join": [ "", [
+                        "[main]\n",
+                        "stack=", { "Ref": "AWS::StackId" }, "\n",
+                        "region=", { "Ref": "AWS::Region" }, "\n"
+                      ]]},
+                      "mode"  : "000400",
+                      "owner" : "root",
+                      "group" : "root"
+                    },
+                    "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                      "content": { "Fn::Join": [ "", [
+                        "[cfn-auto-reloader-hook]\n",
+                        "triggers=post.update\n",
+                        "path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init\n",
+                        "action=/opt/aws/bin/cfn-init -v ",
+                                "         --stack ", { "Ref" : "AWS::StackName" },
+                                "         --resource EC2Instance ",
+                                "         --configsets install ",
+                                "         --region ", { "Ref" : "AWS::Region" }, "\n"
+                      ]]},          
+                      "mode"  : "000400",
+                      "owner" : "root",
+                      "group" : "root"
+                    }
+                  },
+                  "services" : {
+                    "sysvinit" : {
+                      "cfn-hup" : { "enabled" : "true", "ensureRunning" : "true",
+                                    "files" : ["/etc/cfn/cfn-hup.conf", "/etc/cfn/hooks.d/cfn-auto-reloader.conf"] }
+                    }
+                  }
+                },
+
+                "install" : {
                   "packages" : {
                     "yum" : {
                       "httpd"        : [],
@@ -201,7 +238,12 @@
             "/opt/aws/bin/cfn-init -v ",
             "         --stack ", { "Ref" : "AWS::StackName" },
             "         --resource EC2Instance ",
-            "         --configsets Install ",
+            "         --configsets install ",
+            "         --region ", { "Ref" : "AWS::Region" }, "\n",
+
+            "/opt/aws/bin/cfn-signal -e $? ",
+            "         --stack ", { "Ref" : "AWS::StackName" },
+            "         --resource EC2Instance ",
             "         --region ", { "Ref" : "AWS::Region" }, "\n"
                 ]
               ]
