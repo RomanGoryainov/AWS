@@ -20,7 +20,8 @@
     "SubnetConfig" : {
       "VPC"     : { "CIDR" : "10.0.0.0/16" },
       "Public"  : { "CIDR" : "10.0.1.0/24" },
-      "Private"  : { "CIDR" : "10.0.2.0/24" }
+      "Private1"  : { "CIDR" : "10.0.2.0/24" },
+      "Private2"  : { "CIDR" : "10.0.3.0/24" }
       }
     },
   
@@ -34,6 +35,7 @@
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "VPC", "CIDR" ]},
         "Tags" : [
           { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+          { "Key" : "Name", "Value" : { "Ref" : "AWS::StackName" } },
           { "Key" : "Network", "Value" : "Public" }
         ]
       }
@@ -53,15 +55,28 @@
       }
     },
 
-    "PrivateSubnet" : {
+    "PrivateSubnet1" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
-        "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Private", "CIDR" ]},
+        "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Private1", "CIDR" ]},
         "AvailabilityZone" : {"Fn::Select": [1, {"Fn::GetAZs": ""}]},
         "Tags" : [
           { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
-          { "Key" : "Network", "Value" : "Private" }
+          { "Key" : "Network", "Value" : "Private1" }
+        ]
+      }
+    },
+
+    "PrivateSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Private2", "CIDR" ]},
+        "AvailabilityZone" : {"Fn::Select": [2, {"Fn::GetAZs": ""}]},
+        "Tags" : [
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+          { "Key" : "Network", "Value" : "Private2" }
         ]
       }
     },
@@ -153,10 +168,18 @@
     }
   },
 
-    "PrivateSubnetRouteTableAssociation" : {
+    "PrivateSubnetRouteTableAssociation1" : {
     "Type" : "AWS::EC2::SubnetRouteTableAssociation",
     "Properties" : {
-      "SubnetId" : { "Ref" : "PrivateSubnet" },
+      "SubnetId" : { "Ref" : "PrivateSubnet1" }, 
+      "RouteTableId" : { "Ref" : "PrivateRouteTable" }
+    }
+  },
+
+  "PrivateSubnetRouteTableAssociation2" : {
+    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+    "Properties" : {
+      "SubnetId" : { "Ref" : "PrivateSubnet2" }, 
       "RouteTableId" : { "Ref" : "PrivateRouteTable" }
     }
   },
@@ -193,17 +216,28 @@
     "Description" : "AZ for newely Public Subnet",
     "Value" : { "Fn::GetAtt" : [ "PublicSubnet", "AvailabilityZone" ] }
     },
-    "PrivateSubnet" : {
-      "Description" : "SubnetId of the private subnet",
-      "Value" :  { "Ref" : "PrivateSubnet" },
+    "PrivateSubnet1" : {
+      "Description" : "SubnetId of the private subnet 1",
+      "Value" :  { "Ref" : "PrivateSubnet1" },
       "Export" : {
-        "Name" : {"Fn::Sub": "${AWS::StackName}-PrivateID" }
+        "Name" : {"Fn::Sub": "${AWS::StackName}-1-PrivateID" }
       }
     },
-    "PrivateSubnetAZ" : {
-    "Description" : "AZ for newely Private Subnet",
-    "Value" : { "Fn::GetAtt" : [ "PrivateSubnet", "AvailabilityZone" ] }
+    "PrivateSubnet2" : {
+      "Description" : "SubnetId of the private subnet 2",
+      "Value" :  { "Ref" : "PrivateSubnet2" },
+      "Export" : {
+        "Name" : {"Fn::Sub": "${AWS::StackName}-2-PrivateID" }
+      }
     },
+    "PrivateSubnetAZ1" : {
+    "Description" : "AZ for newely Private Subnet 1",
+    "Value" : { "Fn::GetAtt" : [ "PrivateSubnet1", "AvailabilityZone" ] }
+    },
+    "PrivateSubnetAZ2" : {
+      "Description" : "AZ for newely Private Subnet 2",
+      "Value" : { "Fn::GetAtt" : [ "PrivateSubnet2", "AvailabilityZone" ] }
+      },
     "InternetGateway" : {
       "Description" : "Id of the Internet Gateway",
       "Value" :  { "Ref" : "InternetGateway" }

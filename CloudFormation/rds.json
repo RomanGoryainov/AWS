@@ -1,0 +1,118 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    
+    "Description" : "Create DBSubnet Group, RDS instance.",
+
+    "Parameters" : {
+        "DBUser": {
+            "NoEcho": "true",
+            "Description" : "The database admin account username",
+            "Type": "String",
+            "MinLength": "1",
+            "MaxLength": "16",
+            "AllowedPattern" : "[a-zA-Z][a-zA-Z0-9]*",
+            "ConstraintDescription" : "must begin with a letter and contain only alphanumeric characters."
+          },
+      
+          "DBPassword": {
+            "NoEcho": "true",
+            "Description" : "The database admin account password",
+            "Type": "String",
+            "MinLength": "8",
+            "MaxLength": "41",
+            "AllowedPattern" : "[a-zA-Z0-9]*",
+            "ConstraintDescription" : "must contain only alphanumeric characters."
+          },
+
+          "DBInstanceClass": {
+            "Description" : "The database instance type",
+            "Type": "String",
+            "Default": "db.t2.micro",
+            "AllowedValues" : [ "db.t2.micro", "db.t2.medium", "db.t2.large"],
+            "ConstraintDescription" : "must select a valid database instance type."
+          },
+
+          "VPC" : {
+            "Description" : "Name of an existing VPC",
+            "Type" : "AWS::EC2::VPC::Id",
+            "ConstraintDescription" : "must be the name of an existing VPC.",
+            "Default" : ""
+          },
+
+          "NetworkStackNameParameter" : {
+            "Type" : "String",
+            "Default" : "staging"
+        }
+    },
+
+    "Resources" : {
+        "DBSubnetGroup" : {
+            "Type" : "AWS::RDS::DBSubnetGroup",
+            "Properties" : {
+               "DBSubnetGroupDescription" : "RDS SubnetGroup",
+               "SubnetIds" : [ 
+                {"Fn::ImportValue" : {"Fn::Sub" : "${NetworkStackNameParameter}-1-PrivateID"}}, 
+                {"Fn::ImportValue" : {"Fn::Sub" : "${NetworkStackNameParameter}-2-PrivateID"}}
+             ],
+               "Tags" : [ 
+                { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+                { "Key" : "Network", "Value" : "DBSubnetGroup" }
+                ]
+            }
+         },
+
+         "RDSSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+              "GroupDescription" : "Enable access to the RDS from VPC",
+              "VpcId" : { "Ref" : "VPC" },
+              "SecurityGroupIngress" : [ 
+                { 
+                    "IpProtocol" : "tcp", 
+                    "FromPort" : "3306",  
+                    "ToPort" : "3306", 
+                    "CidrIp" : "10.0.0.0/16"
+                }
+              ]
+            }
+          },
+
+         "MariaDB" : {
+            "Type" : "AWS::RDS::DBInstance",
+            "Properties" : {
+              "AllocatedStorage" : "20",
+              "DBInstanceClass" : "db.t2.micro",
+              "Engine" : "mariadb",
+              "EngineVersion" : "10.2.12",
+              "MasterUsername" : { "Ref" : "DBUser" },
+              "MasterUserPassword" : { "Ref" : "DBPassword" },
+              "DBSubnetGroupName" : { "Ref" : "DBSubnetGroup"},
+              "PubliclyAccessible" : "false",
+              "BackupRetentionPeriod" : "0",
+              "VPCSecurityGroups" : [ { "Fn::GetAtt": [ "RDSSecurityGroup", "GroupId" ] } ]
+            },
+            "DeletionPolicy" : "Delete"
+          }
+    },
+
+    "Outputs" : {
+        "DBSubnetGroup" : {
+            "Description" : "Name of DBSubnetGroup",
+            "Value" :  { "Ref" : "DBSubnetGroup" },
+            "Export" : {
+              "Name" : {"Fn::Sub": "${AWS::StackName}-DBSubnetGroup" }
+            }
+       },
+       
+       "JDBCConnectionString": {
+        "Description" : "JDBC connection string for the database",
+        "Value" : {
+             "Fn::Join": 
+        [
+        "", [ "jdbc:mysql://",{ "Fn::GetAtt": [ "MariaDB", "Endpoint.Address" ] },":", { "Fn::GetAtt": [ "MariaDB", "Endpoint.Port" ] }]
+         ]
+        }
+
+      }
+    }    
+}
